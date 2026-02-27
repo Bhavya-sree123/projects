@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>AI Career Intelligence</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body{
+margin:0;
+font-family:Poppins,sans-serif;
+background:linear-gradient(135deg,#1f1c2c,#928dab);
+color:white;
+display:flex;
+justify-content:center;
+align-items:center;
+min-height:100vh;
+}
+.card{
+background:rgba(255,255,255,0.1);
+padding:30px;
+border-radius:20px;
+width:420px;
+}
+input,select{
+width:100%;
+padding:10px;
+margin:6px 0;
+border:none;
+border-radius:10px;
+}
+button{
+width:100%;
+padding:10px;
+border:none;
+border-radius:20px;
+background:#00ffd5;
+cursor:pointer;
+font-weight:bold;
+}
+.result{margin-top:15px;}
+.job-card{
+background:rgba(255,255,255,0.2);
+padding:10px;
+margin:8px 0;
+border-radius:10px;
+}
+</style>
+</head>
+<body>
+
+<div class="card">
+
+<h2>🚀 Career AI Predictor</h2>
+
+<input type="number" id="cgpa" placeholder="CGPA (0-10)" step="0.1">
+<input type="number" id="projects" placeholder="Projects">
+<input type="number" id="internship" placeholder="Internship (1/0)">
+<input type="number" id="skills" placeholder="Skill Level (1-10)">
+
+<select id="domain">
+<option value="Web">Web Development</option>
+<option value="AI">AI / ML</option>
+<option value="Data">Data Science</option>
+<option value="Cyber">Cyber Security</option>
+</select>
+
+<input type="text" id="location" placeholder="Preferred Location (Hyderabad, Bangalore...)">
+
+<button onclick="analyze()">Analyze</button>
+
+<div id="result" class="result"></div>
+<canvas id="chart"></canvas>
+
+</div>
+
+<script>
+
+let myChart=null;
+
+async function analyze(){
+
+const cgpa=document.getElementById("cgpa").value;
+const projects=document.getElementById("projects").value;
+const internship=document.getElementById("internship").value;
+const skills=document.getElementById("skills").value;
+const domain=document.getElementById("domain").value;
+const location=document.getElementById("location").value;
+
+if(cgpa===""||projects===""||internship===""||skills===""){
+alert("Fill all fields");
+return;
+}
+
+document.getElementById("result").innerHTML="Analyzing...";
+
+const response=await fetch("/analyze",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({cgpa,projects,internship,skills,domain,location})
+});
+
+const result=await response.json();
+
+if(result.error){
+alert(result.error);
+return;
+}
+
+document.getElementById("result").innerHTML=`
+<h3>Probability: ${result.probability}%</h3>
+<h4>Suggestions</h4>
+${result.suggestions.join("<br>")}
+<h4>Projects</h4>
+${result.projects.join("<br>")}
+<h4>Roadmap</h4>
+${result.roadmap.join("<br>")}
+<h4>Relevant Jobs</h4>
+${result.jobs.map(job=>`
+<div class="job-card">
+<b>${job.title}</b><br>
+${job.company}<br>
+${job.location}<br>
+${job.salary}<br>
+<a href="${job.url}" target="_blank">
+<button>Apply</button>
+</a>
+</div>
+`).join("")}
+`;
+
+if(myChart){myChart.destroy();}
+
+myChart=new Chart(document.getElementById("chart"),{
+type:"doughnut",
+data:{
+labels:["Success","Risk"],
+datasets:[{data:[result.probability,100-result.probability]}]
+}
+});
+
+}
+
+</script>
+
+</body>
+</html>
